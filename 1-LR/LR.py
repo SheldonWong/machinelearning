@@ -137,7 +137,7 @@ def colicTest():
     return errorRate
      
 def simpleTest():
-    data,label = loadDataset('testSet.txt')
+    data,label = loadDataset('data/testSet.txt')
     #注意label是n行一列，是个二维列表,[[0]]
     #print(mat(label)[0])
     
@@ -146,7 +146,7 @@ def simpleTest():
     #weights = stocGradAscent1(data,label,300)
     plotBestFit(data,label,weights)
     
-#simpleTest()
+
 
 def multiTest():
     numTests = 10
@@ -154,6 +154,6 @@ def multiTest():
     for k in range(numTests):
         errorSum += colicTest()
     print("after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests))) 
-
+#simpleTest()
 #colicTest()
 multiTest()
