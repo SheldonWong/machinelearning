@@ -2,6 +2,7 @@
 
 from numpy import *
 import matplotlib.pyplot as plt
+from LR2 import LogisticRegression
 
 def loadDataset(filename):
     dataMat = []; labelMat = []
@@ -141,8 +142,11 @@ def simpleTest():
     #注意label是n行一列，是个二维列表,[[0]]
     #print(mat(label)[0])
     
-    #weights = gradAscent(data,label)
+    model = LogisticRegression()
+    weights = model.fit(array(data),array(label))
+    '''
     weights = stocGradAscent(data,label)
+    '''
     #weights = stocGradAscent1(data,label,300)
     plotBestFit(data,label,weights)
     
@@ -154,6 +158,6 @@ def multiTest():
     for k in range(numTests):
         errorSum += colicTest()
     print("after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests))) 
-#simpleTest()
+simpleTest()
 #colicTest()
-multiTest()
+#multiTest()
