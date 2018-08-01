@@ -144,6 +144,8 @@ def simpleTest():
     
     model = LogisticRegression()
     weights = model.fit(array(data),array(label))
+    y_hat = model.predict(array(data),weights)
+    print(model.score(array(label),y_hat))
     '''
     weights = stocGradAscent(data,label)
     '''

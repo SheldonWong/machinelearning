@@ -18,6 +18,12 @@ class LogisticRegression():
     def sigmoid(self,z):
         return 1.0/(1.0+np.exp(-z))
 
+    '''
+    @desc:训练
+    @param:X，y，alpha，iter
+    @return:weights_array，权重向量
+    '''
+
     def fit(self,X,y,alpha=0.8,iter=1000):
         X_array = np.array(X)
         y_array = np.array(y)
@@ -45,13 +51,13 @@ class LogisticRegression():
     '''
 
     def predict(self,X_array,weights):
-        prob = sigmoid(np.sum(X*weights))
+        prob = self.sigmoid(np.dot(X_array,weights))
         return np.where(prob>=0.5,1,0)
 
     '''
     @desc:传进来真是的标签向量和预测的标签向量，返回预测准确率
-    @param:
-    @return:
+    @param:标签向量 y_array
+    @return:预测准确率 
     '''
     def score(self,y_array,y_hat):
         res = np.where(y_array == y_hat)
