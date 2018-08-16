@@ -7,9 +7,10 @@
 ### 4. NaiveBayesian
 ### 5. SVM
 ### 6. DecisionTree
-      * ID3
-      * C4.5
-      * CART
-      * GBDT
-      * RandomForest
+- ID3
+- C4.5
+- CART
+- GBDT
+- RandomForest
+
 ### 7. NN 
