@@ -12,8 +12,9 @@ __all__ = ['DecisionTree', 'unique']
 
 class  DecisionTree(object):
     '''
-    ID3.0决策树的实现
+    C4.5 决策树的实现
     '''
+    
     def createDataSet2(self):
         dataSet = [[1, 1, 'yes'],
                    [1, 1, 'yes'],
@@ -42,13 +43,16 @@ class  DecisionTree(object):
         Returns:
         '''
         d = {}
-        column = [example[-1] for example in dataset]
+        if(isinstance(dataset[0],list)):
+            column = [example[-1] for example in dataset]
+        else:
+            column = dataset
         for v in column:
             if(v not in d.keys()): d[v] = 0
             d[v] += 1
         return d
 
-    # 根据类别统计计算信息熵
+    # 根据类别统计计算信息熵,entropy计算的是数据不纯度，理论上传入一个列表即可
     def entropy(self,dataset):
         sample_num = len(dataset)
         result = 0.0
@@ -68,23 +72,23 @@ class  DecisionTree(object):
 
 
     # 维护一个未使用特征索引列表，
-    # 对于未使用的特征，计算信息增益，选择最佳特征，加入到表示决策树的嵌套字典中
+    # 对于未使用的特征，计算信息增益率，选择最佳特征，加入到表示决策树的嵌套字典中
     # 参数1 划分后的数据集，参数2 未使用特征索引列表
     def choose_best_feature(self,dataset,rest_features):
         
         #当前节点数据集的信息熵（可能是根，也可能是叶子节点）
         base_entropy = self.entropy(dataset)
-        # 信息增益
-        best_infogain = 0.0; best_feature_index = -1# 初始化   
+        # 信息增益率
+        best_infogain_rate = 0.0; best_feature_index = -1# 初始化   
         
-        #对于未使用的特征，遍历计算信息增益
+        #对于未使用的特征，遍历计算信息增益率
         for feature_index in rest_features:
             #当前列对应的特征取值列表
             feature_value_list = [sample[feature_index] for sample in dataset]
             unique_val = set(feature_value_list)
             new_entropy = 0.0
             
-            #计算信息增益
+            #计算条件熵，已知特征为feature_index
             for value in unique_val:
                 #按照第feature_index的value列划分数据集
                 sub_dataset = self.split_dataset(dataset,feature_index,value)
@@ -93,13 +97,16 @@ class  DecisionTree(object):
            
             info_gain = base_entropy - new_entropy        
             
-            print('feature_index:{0},info_gain:{1}'.format(feature_index,info_gain))
+            # 计算信息增益率
+            info_gain_rate = info_gain / self.entropy(feature_value_list) 
+
+            print('feature_index:{0},info_gain_rate:{1}'.format(feature_index,info_gain_rate))
             
-            if(info_gain > best_infogain):
-                best_infogain = info_gain
+            if(info_gain_rate > best_infogain_rate):
+                best_infogain_rate = info_gain_rate
                 best_feature_index = feature_index
                 
-            print('best_feature_index:{},best_infogain:{}'.format(best_feature_index,best_infogain))
+            print('best_feature_index:{},best_infogain_rate:{}'.format(best_feature_index,best_infogain_rate))
         return best_feature_index
 
  
@@ -181,10 +188,14 @@ dt = DecisionTree()
 dataSet,labels = dt.createDataSet2()
 rest_labels = list(range(0,len(labels)))
 myTree= dt.build_tree(dataSet,rest_labels,labels)
+
+import json
+print(json.dumps(myTree,indent=4))
+
 '''
 sample = [2, 2, 1, 0]
 pred = dt.predict(myTree,labels,sample)
 print("sample=>{},pred=>{}".format(sample,pred))
+
+
 '''
-import json
-print(json.dumps(myTree,indent=4))
