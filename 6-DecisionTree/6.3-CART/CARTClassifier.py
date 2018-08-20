@@ -43,7 +43,8 @@ class  DecisionTree(object):
         Returns:
         '''
         d = {}
-        if(isinstance(dataset[0],list)):
+
+        if(len(dataset) > 0 and isinstance(dataset[0],list)):
             column = [example[-1] for example in dataset]
         else:
             column = dataset
@@ -62,27 +63,35 @@ class  DecisionTree(object):
         return 1 - result
     
 
-    # 根据(feature_index，value)划分数据集
+    # 根据(feature_index，value)将数据集切分成两份
     def split_dataset(self,dataset, feature_index, value):
-        sub_dataset = []
-        for sample in dataset:
-            if sample[feature_index] == value:
-                sub_dataset.append(sample)
-        return sub_dataset
+        list1 = []
+        list2 = []
+        if(isinstance(value,int) or isinstance(value,float)): #for int and float type
+            for row in dataset:
+                if (row[feature_index] >= value):list1.append(row)
+                else:list2.append(row)
+         
+        return list1,list2
 
 
+    # desc:
     # 维护一个未使用特征索引列表，
-    # 对于未使用的特征，计算信息增益率，选择最佳特征，加入到表示决策树的嵌套字典中
-    # 参数1 划分后的数据集，参数2 未使用特征索引列表
-    def choose_best_feature(self,dataset,rest_features):
+    # 对于未使用的特征，计算gini系数，选择最佳特征，加入到表示决策树的嵌套字典中
+    # 参数1 要划分的数据集，参数2 未使用特征索引列表
+    def choose_best_feature(self,dataset,rest_features_index):
         
         #当前节点数据集的信息熵（可能是根，也可能是叶子节点）
-        base_entropy = self.entropy(dataset)
-        # 信息增益率
-        best_infogain_rate = 0.0; best_feature_index = -1# 初始化   
+        base_gini = self.gini(dataset)
         
+        # gini系数
+        best_gini_gain = 0.0
+        best_feature_index = -1# 初始化   
+        
+        rows_length = len(dataset)
+
         #对于未使用的特征，遍历计算信息增益率
-        for feature_index in rest_features:
+        for feature_index in rest_features_index:
             #当前列对应的特征取值列表
             feature_value_list = [sample[feature_index] for sample in dataset]
             unique_val = set(feature_value_list)
@@ -91,22 +100,19 @@ class  DecisionTree(object):
             #计算条件熵，已知特征为feature_index
             for value in unique_val:
                 #按照第feature_index的value列划分数据集
-                sub_dataset = self.split_dataset(dataset,feature_index,value)
-                prob = len(sub_dataset)/float(len(dataset))
-                new_entropy += prob * self.entropy(sub_dataset)
-           
-            info_gain = base_entropy - new_entropy        
+                left,right = self.split_dataset(dataset,feature_index,value)
+                p = len(left) / rows_length
+                new_gini = p * self.gini(left) + (1-p) * self.gini(right)
+                new_gini_gain = base_gini - new_gini
             
-            # 计算信息增益率
-            info_gain_rate = info_gain / self.entropy(feature_value_list) 
 
-            print('feature_index:{0},info_gain_rate:{1}'.format(feature_index,info_gain_rate))
+            print('feature_index:{0},new_gini_gain:{1}'.format(feature_index,new_gini_gain))
             
-            if(info_gain_rate > best_infogain_rate):
-                best_infogain_rate = info_gain_rate
+            if(new_gini_gain > best_gini_gain):
+                best_gini_gain = new_gini_gain
                 best_feature_index = feature_index
                 
-            print('best_feature_index:{},best_infogain_rate:{}'.format(best_feature_index,best_infogain_rate))
+            print('best_feature_index:{},best_gini_gain:{}'.format(best_feature_index,best_gini_gain))
         return best_feature_index
 
  
@@ -116,39 +122,47 @@ class  DecisionTree(object):
         for vote in classList:
             if vote not in classCount.keys(): classCount[vote] = 0
             classCount[vote] += 1
-        sortedClassCount = sorted(classCount.iteritems(),key=operator.itemgetter(1),reverse=True)
+        sortedClassCount = sorted(classCount.items(),key=operator.itemgetter(1),reverse=True)
         return sortedClassCount[0][0]
 
     # 递归的构建决策树
     # args：dataset 数据，rest_labels 剩余的标签索引列表 labels 标签真实值，仅为了构建树使用
     def build_tree(self,dataset,rest_labels,labels):
+
         class_list = [sample[-1] for sample in dataset]
+
+        # 为啥会有空的列表呢？
+        if(len(class_list) == 0):
+            return
         #终止条件
         # 类别完全相同则停止继续划分，返回类别
-        if class_list.count(class_list[0]) == len(class_list):
+        if(class_list.count(class_list[0]) == len(class_list)):
             print('终止条件1') 
             return class_list[0]
-        
-        if len(rest_labels) == 0: # 遍历完所有特征时返回出现次数最多的
+
+        # 遍历完所有特征时返回出现次数最多的
+        if len(rest_labels) == 0: 
             print('终止条件2') 
-            return majorityCnt(class_list)
+            return self.majorityCnt(class_list)
         
         print('rest_labels=>{0}'.format(rest_labels))
+        
         ### 选择最佳特征，划分数据集
         best_feature_index = self.choose_best_feature(dataset,rest_labels)
         best_feature_label = labels[best_feature_index]
         myTree = {best_feature_label:{}}
-        #在特征列表中，删除指定特征索引
+        
+        #在特征索引列表中，删除指定特征索引
         rest_labels.remove(best_feature_index)
         print('best_feature_index=>{0},rest_labels=>{1}'.format(best_feature_index,rest_labels))
         
         #递归调用
         featValues = [example[best_feature_index] for example in dataset]
         uniqueVals = set(featValues)
-        for value in uniqueVals:
-            #递归调用的参数，切分后的数据集，剩余的特征，全部的labels只是为了构建树需要
-            print('best_feature_index=>{},value=>{}'.format(best_feature_index,value))
-            myTree[best_feature_label][value] = self.build_tree(self.split_dataset(dataset, best_feature_index, value),rest_labels,labels)
+        for value in uniqueVals:        
+            left,right = self.split_dataset(dataset, best_feature_index, value)    
+            myTree[best_feature_label][value] = self.build_tree(left,rest_labels,labels)
+            myTree[best_feature_label][value] = self.build_tree(right,rest_labels,labels)
         return myTree 
 
     # 预测单个样本的类别
@@ -185,14 +199,16 @@ class  DecisionTree(object):
 
 
 dt = DecisionTree()
-dataSet,labels = dt.createDataSet2()
+dataset,labels = dt.createDataSet2()
 rest_labels = list(range(0,len(labels)))
-myTree= dt.build_tree(dataSet,rest_labels,labels)
+myTree= dt.build_tree(dataset,rest_labels,labels)
 
+print(myTree)
+'''
 import json
 print(json.dumps(myTree,indent=4))
 
-'''
+
 sample = [2, 2, 1, 0]
 pred = dt.predict(myTree,labels,sample)
 print("sample=>{},pred=>{}".format(sample,pred))
