@@ -63,6 +63,7 @@ class  DecisionTree(object):
     
 
     # 根据(feature_index，value)划分数据集
+    # 返回切分后的二维数据集, 每个子集代表一个节点
     def split_dataset(self,dataset, feature_index, value):
         sub_dataset = []
         for sample in dataset:
@@ -134,10 +135,12 @@ class  DecisionTree(object):
             return majorityCnt(class_list)
         
         print('rest_labels=>{0}'.format(rest_labels))
+        
         ### 选择最佳特征，划分数据集
         best_feature_index = self.choose_best_feature(dataset,rest_labels)
         best_feature_label = labels[best_feature_index]
         myTree = {best_feature_label:{}}
+        
         #在特征列表中，删除指定特征索引
         rest_labels.remove(best_feature_index)
         print('best_feature_index=>{0},rest_labels=>{1}'.format(best_feature_index,rest_labels))
